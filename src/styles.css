@@ -27,7 +27,7 @@
 	--accent: #a5f3fc;
 	--accent-foreground: #0c5c72;
 	--background: #072a38;
-	--background: #ffffff;
+	/* --background: #ffffff; */
 	--input: #a5f3fc;
 }
 
@@ -39,8 +39,12 @@
 	--accent: #072a38;
 	--accent-foreground: #67e8f9;
 	--background: #051b24;
-	--background: #ffffff;
+	/* --background: #ffffff; */
 	--input: #a5f3fc;
+}
+
+body {
+	background-color: var(--color-slate-900);
 }
 
 @theme inline {

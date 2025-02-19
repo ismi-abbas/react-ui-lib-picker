@@ -9,6 +9,7 @@ import { Button } from "../components/button";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Card, CardFooter, CardHeader } from "../components/card";
+import { useQuery } from "@tanstack/react-query";
 
 type Library = {
 	id: number;
@@ -127,24 +128,17 @@ const allLib: Library[] = [
 	},
 	{
 		id: 16,
-		name: "React Hook Form",
-		url: "https://react-hook-form.com/",
-		github: "react-hook-form/react-hook-form",
-		categories: ["Form Management", "Validation"],
-	},
-	{
-		id: 17,
-		name: "React Query",
-		url: "https://tanstack.com/query/",
-		github: "TanStack/query",
-		categories: ["Data Fetching", "Cache Management"],
-	},
-	{
-		id: 18,
 		name: "React Select",
 		url: "https://react-select.com/",
 		github: "JedWatson/react-select",
 		categories: ["Form Components", "Accessible"],
+	},
+	{
+		id: 17,
+		name: "HeroUI",
+		url: "https://www.heroui.com/",
+		github: "heroui-inc/heroui",
+		categories: ["UI Components", "Validation"],
 	},
 ];
 
@@ -167,9 +161,44 @@ export const Route = createFileRoute("/")({
 	component: App,
 });
 
+const fetchGithubStars = async (libraries: typeof allLib) => {
+	const updatedLibraries = await Promise.all(
+		libraries.map(async (library) => {
+			try {
+				const response = await fetch(
+					`https://api.github.com/repos/${library.github}`,
+					{
+						headers: {
+							Accept: "application/vnd.github+json",
+							Authorization: `Bearer ${import.meta.env.VITE_GITHUB_TOKEN}`,
+							"X-GitHub-Api-Version": "2022-11-28",
+						},
+					},
+				);
+				const data = await response.json();
+				return { ...library, stars: data.stargazers_count };
+			} catch (error) {
+				console.error(`Error fetching stars for ${library.name}:`, error);
+				return library;
+			}
+		}),
+	);
+	return updatedLibraries.sort((a, b) => b.stars - a.stars);
+};
+
 function App() {
 	const [darkMode, setDarkMode] = useState(false);
-	const [libraries, setLibraries] = useState<Library[]>(allLib);
+
+	const {
+		data: librariesWithStars,
+		isLoading,
+		error,
+	} = useQuery({
+		queryKey: ["libraries"],
+		queryFn: () => fetchGithubStars(allLib),
+		enabled: allLib.length > 0,
+		staleTime: 1000 * 60 * 60,
+	});
 
 	useEffect(() => {
 		const isSystemDark = window.matchMedia(
@@ -189,32 +218,6 @@ function App() {
 		}
 	}, []);
 
-	useEffect(() => {
-		async function fetchGithubStars() {
-			try {
-				const updatedLibraries = await Promise.all(
-					libraries.map(async (library) => {
-						try {
-							const response = await fetch(
-								`https://api.github.com/repos/${library.github}`,
-							);
-							const data = await response.json();
-							return { ...library, stars: data.stargazers_count };
-						} catch (error) {
-							console.error(`Error fetching stars for ${library.name}:`, error);
-							return library;
-						}
-					}),
-				);
-				setLibraries(updatedLibraries);
-			} catch (error) {
-				console.error("Error fetching GitHub stars:", error);
-			}
-		}
-
-		fetchGithubStars();
-	}, [libraries]);
-
 	const toggleTheme = () => {
 		const newDarkMode = !darkMode;
 		setDarkMode(newDarkMode);
@@ -230,43 +233,54 @@ function App() {
 	};
 
 	return (
-		<div className="flex flex-col items-center gap-5 bg-white dark:bg-slate-900 transition-colors duration-200">
-			<header className="sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg backdrop-saturate-150 p-4 w-full flex justify-between items-center border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm after:absolute after:inset-0 after:z-[-1] after:bg-gradient-to-b after:from-white/10 after:to-white/5 dark:after:from-slate-800/10 dark:after:to-slate-800/5 after:pointer-events-none z-50">
-				<h1 className="text-xl font-semibold text-primary dark:text-secondary">
-					React UI Picker
-				</h1>
-				<div className="flex">
+		<div className="flex flex-col items-center gap-5 bg-white transition-colors duration-200 dark:bg-slate-900">
+			<header className="sticky top-0 z-50 flex w-full items-center justify-between border-slate-200/50 border-b bg-white/80 p-4 shadow-sm backdrop-blur-lg backdrop-saturate-150 after:pointer-events-none after:absolute after:inset-0 after:z-[-1] after:bg-gradient-to-b after:from-white/10 after:to-white/5 dark:border-slate-800/50 dark:bg-slate-900/80 dark:after:from-slate-800/10 dark:after:to-slate-800/5">
+				<div className="flex items-center">
+					<img
+						src="/logo192.png"
+						alt="React logo"
+						className="mr-2 h-6 w-6 animate-spin duration-[3s]"
+					/>
+					<h1 className="font-semibold text-primary text-xl dark:text-secondary">
+						React UI Picker
+					</h1>
+				</div>
+
+				<div className="flex space-x-2">
+					<Button variant="ghost" className="h-8">
+						Github
+					</Button>
 					<Button
 						variant="ghost"
-						className="group/toggle h-8 w-8 px-0 hover:bg-slate-100 dark:hover:bg-slate-800"
+						className="group/toggle h-8 w-8 px-0"
 						onClick={toggleTheme}
 					>
-						<MoonIcon className="hidden h-4 w-4 [html.light_&]:block" />
-						<SunIcon className="hidden h-4 w-4 [html.dark_&]:block" />
+						<MoonIcon className="block h-4 w-4 dark:hidden" />
+						<SunIcon className="hidden h-4 w-4 dark:block" />
 						<span className="sr-only">Toggle theme</span>
 					</Button>
 				</div>
 			</header>
 
-			<main className="mt-20 flex w-full max-w-6xl flex-1 flex-col items-center space-y-4 px-4 text-center mb-10">
+			<main className="mt-20 mb-10 flex w-full max-w-6xl flex-1 flex-col items-center space-y-4 px-4 text-center">
 				<div>
-					<h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
+					<h1 className="font-bold text-3xl text-slate-900 dark:text-slate-50">
 						Find Your Perfect{" "}
 						<span className="text-primary dark:text-secondary">React</span> UI
 						Library
 					</h1>
-					<p className="max-w-2xl text-slate-600 dark:text-slate-400 mt-4">
+					<p className="mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
 						Discover and compare the best React UI libraries to build stunning
 						interfaces. Stop the endless searching - find the right tools for
 						your next project.
 					</p>
 				</div>
 				<div className="mt-6 flex w-full flex-grow sm:mt-8">
-					<div className="w-1/4 max-h-fit flex-shrink-0 rounded-md bg-white dark:bg-slate-900 p-4 shadow-sm transition-colors duration-200">
-						<div className="w-full mb-10">
+					<div className="max-h-fit w-1/4 flex-shrink-0 rounded-md bg-white p-4 shadow-sm transition-colors duration-200 dark:bg-slate-900">
+						<div className="mb-10 w-full">
 							<Accordion type="multiple">
 								<AccordionItem value="main-feature">
-									<AccordionTrigger className="text-slate-900 dark:text-slate-100 text-md hover:no-underline">
+									<AccordionTrigger className="text-md text-slate-900 hover:no-underline dark:text-slate-100">
 										Main Features
 									</AccordionTrigger>
 									<AccordionContent className="grid w-full grid-cols-2 gap-1">
@@ -283,7 +297,7 @@ function App() {
 									</AccordionContent>
 								</AccordionItem>
 								<AccordionItem value="additional-feature">
-									<AccordionTrigger className="text-slate-900 dark:text-slate-100 text-md hover:no-underline">
+									<AccordionTrigger className="text-md text-slate-900 hover:no-underline dark:text-slate-100">
 										Additional Features
 									</AccordionTrigger>
 									<AccordionContent className="grid w-full grid-cols-2 gap-1">
@@ -304,19 +318,19 @@ function App() {
 					</div>
 					<div className="ml-4 flex-grow overflow-y-auto">
 						<div className="grid grid-cols-1 content-start gap-6 lg:grid-cols-2">
-							{libraries.map((library) => (
+							{librariesWithStars?.map((library) => (
 								<Card
 									key={library.id}
-									className="group bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 min-h-[180px] w-auto rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2 flex flex-col items-start justify-between shadow-sm hover:shadow-md transition-all duration-200 hover:border-primary dark:hover:border-secondary"
+									className="group flex min-h-[180px] w-auto flex-col items-start justify-between rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-900 shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md dark:border-slate-800 dark:bg-slate-700 dark:text-slate-100 dark:hover:border-secondary"
 								>
-									<CardHeader className=" flex items-center justify-between pb-4 border-slate-200 dark:border-slate-600">
+									<CardHeader className=" flex items-center justify-between border-slate-200 pb-4 dark:border-slate-600">
 										<div className="flex flex-col items-start gap-2">
 											<span className="text-lg">{library.name}</span>
 											<div className="flex gap-2">
 												{library.categories.map((category) => (
 													<span
 														key={category}
-														className="px-2 py-0.5 text-xs rounded-full bg-slate-100 dark:bg-slate-600 text-slate-700 dark:text-slate-300"
+														className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700 text-xs dark:bg-slate-600 dark:text-slate-300"
 													>
 														{category}
 													</span>
@@ -333,14 +347,14 @@ function App() {
 											className="mx-auto"
 										/>
 									</div> */}
-									<CardFooter className="text-slate-600 dark:text-slate-400 flex flex-col gap-4 pt-4 dark:border-slate-600">
+									<CardFooter className="flex flex-col gap-4 pt-4 text-slate-600 dark:border-slate-600 dark:text-slate-400">
 										{library.stars !== undefined && (
-											<div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 w-fit">
+											<div className="flex w-fit items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-slate-900 dark:bg-slate-800 dark:text-slate-100">
 												<StarIcon className="h-4 w-4 text-yellow-500" />
-												<span className="text-sm font-semibold">
+												<span className="font-semibold text-sm">
 													{library.stars.toLocaleString()}
 												</span>
-												<span className="text-xs text-slate-500 dark:text-slate-400">
+												<span className="text-slate-500 text-xs dark:text-slate-400">
 													stars
 												</span>
 											</div>
@@ -350,7 +364,7 @@ function App() {
 												href={library.url}
 												target="_blank"
 												rel="noopener noreferrer"
-												className="flex items-center gap-2 hover:text-primary dark:hover:text-secondary transition-colors"
+												className="flex items-center gap-2 transition-colors hover:text-primary dark:hover:text-secondary"
 											>
 												<svg
 													className="h-4 w-4"
