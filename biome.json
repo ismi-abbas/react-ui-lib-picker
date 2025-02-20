@@ -9,13 +9,8 @@
 		"ignoreUnknown": false,
 		"ignore": []
 	},
-	"formatter": {
-		"enabled": true,
-		"indentStyle": "tab"
-	},
-	"organizeImports": {
-		"enabled": true
-	},
+	"formatter": { "enabled": true, "indentStyle": "tab", "lineWidth": 120 },
+	"organizeImports": { "enabled": true },
 	"linter": {
 		"enabled": true,
 		"rules": {
@@ -26,11 +21,9 @@
 			"nursery": {
 				"useSortedClasses": "error"
 			}
-		}
+		},
+
+		"ignore": ["**/node_modules/**", "**/dist/**", "**/src/routeTree.gen.ts"]
 	},
-	"javascript": {
-		"formatter": {
-			"quoteStyle": "double"
-		}
-	}
+	"javascript": { "formatter": { "quoteStyle": "double", "indentWidth": 4, "indentStyle": "tab" } }
 }

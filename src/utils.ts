@@ -1,5 +1,6 @@
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { NPMDateSort } from "./lib/types";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -22,11 +23,8 @@ export async function getGithubToken() {
 	return data;
 }
 
-export async function getNPMDownloadStats(packageName: string) {
-	const response = await fetch(
-		`https://api.npmjs.org/downloads/point/last-month/${packageName}`,
-		{},
-	);
+export async function getNPMDownloadStats(packageName: string, dateFilter: NPMDateSort) {
+	const response = await fetch(`https://api.npmjs.org/downloads/point/${dateFilter}/${packageName}`);
 
 	if (!response.ok) {
 		throw new Error("Failed to get NPM download stats");
@@ -34,5 +32,5 @@ export async function getNPMDownloadStats(packageName: string) {
 
 	const data = await response.json();
 	console.log(data);
-	return data;
+	return data.downloads;
 }
