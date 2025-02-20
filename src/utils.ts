@@ -21,3 +21,18 @@ export async function getGithubToken() {
 	console.log(data);
 	return data;
 }
+
+export async function getNPMDownloadStats(packageName: string) {
+	const response = await fetch(
+		`https://api.npmjs.org/downloads/point/last-month/${packageName}`,
+		{},
+	);
+
+	if (!response.ok) {
+		throw new Error("Failed to get NPM download stats");
+	}
+
+	const data = await response.json();
+	console.log(data);
+	return data;
+}
