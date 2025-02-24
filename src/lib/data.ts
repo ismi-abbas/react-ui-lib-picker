@@ -241,6 +241,21 @@ export const allLib: Library[] = [
 		stars: 0,
 		totalDownloads: 0,
 	},
+	{
+		name: "Ark UI",
+		url: "https://ark-ui.com/",
+		logo: "ark-ui.svg",
+		repoOwner: "chakra-ui",
+		repoName: "ark",
+		categories: ["UI Components", "Validation"],
+		packageName: "@ark-ui/react",
+		features: {
+			main: [],
+			additional: [],
+		},
+		stars: 0,
+		totalDownloads: 0,
+	},
 ].map((library, index) => ({ ...library, id: index + 1 }));
 
 console.log(allLib);

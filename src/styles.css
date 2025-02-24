@@ -51,6 +51,7 @@
 
 body {
   background-color: var(--color-slate-900);
+  scroll-behavior: smooth;
 }
 
 @theme inline {

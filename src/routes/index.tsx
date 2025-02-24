@@ -6,41 +6,13 @@ import { useEffect, useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/accordion";
 import { Button } from "@/components/button";
 import LibraryCard from "@/components/library-card";
-import { getNPMDownloadStats } from "@/utils";
-import type { Library, NPMDateSort } from "@/lib/types";
+import type { NPMDateSort } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/select";
+import { getPackageInfo } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
 	component: App,
 });
-
-const getPackageInfo = async (libraries: Library[], dateFilter: NPMDateSort) => {
-	const updatedLibraries = await Promise.all(
-		libraries.map(async (library) => {
-			const npmDownloads = await getNPMDownloadStats(library.packageName, dateFilter);
-			try {
-				const response = await fetch(`https://api.github.com/repos/${library.repoOwner}/${library.repoName}`, {
-					headers: {
-						Accept: "application/vnd.github+json",
-						Authorization: `Bearer ${import.meta.env.VITE_GITHUB_TOKEN}`,
-						"X-GitHub-Api-Version": "2022-11-28",
-					},
-				});
-				const data = await response.json();
-				return {
-					...library,
-					stars: data.stargazers_count,
-					description: data.description,
-					totalDownloads: npmDownloads,
-				};
-			} catch (error) {
-				console.error(`Error fetching stars for ${library.name}:`, error);
-				return library;
-			}
-		}),
-	);
-	return updatedLibraries;
-};
 
 function App() {
 	const [darkMode, setDarkMode] = useState(false);
@@ -178,7 +150,7 @@ function App() {
 						{isLoading ? (
 							<div>Loading...</div>
 						) : (
-							<div className="grid grid-cols-1 content-start gap-6 lg:grid-cols-2">
+							<div className="grid grid-cols-1 content-start gap-3 lg:grid-cols-2">
 								{librariesWithStars
 									?.sort((a, b) => {
 										if (sortedBy === "stars") {
